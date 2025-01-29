@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createAccount, login, getUser } from './handlers';
+import { createAccount, login, getUser, updateProfile } from './handlers';
 import { body } from 'express-validator';
 import { handleInputErrors } from './middleware/validation';
 import { authenticate } from './middleware/auth';
@@ -38,5 +38,15 @@ router.post('/auth/login/',
     login);
 
 router.get('/user', authenticate, getUser);
+router.patch('/user',
+    body('handle')
+        .notEmpty()
+        .withMessage('Handle can not be empty...'),
+    body('description')
+        .notEmpty()
+        .withMessage('Description can not be empty...'),
+    handleInputErrors,
+    authenticate,
+    updateProfile);
 
 export default router;
