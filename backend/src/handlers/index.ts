@@ -4,6 +4,9 @@ import { validationResult } from "express-validator";
 import { Request, Response } from 'express';
 import { hashPassword, checkPassword } from "../utils/auth";
 import { generateJWT } from "../utils/jwt";
+import formidable from 'formidable'
+import cloudinary from "../config/cloudinary";
+import { v4 as uuid } from 'uuid'
 
 
 export const createAccount = async (req: Request, res: Response) => {
@@ -101,4 +104,36 @@ export const updateProfile = async (req: Request, res: Response) => {
         res.status(500).json({ error: error.message })
         return;
     }
+}
+
+export const uploadImage = (req: Request, res: Response) => {
+    const form = formidable({
+        multiples: false
+    });
+
+
+
+    try {
+        form.parse(req, (error, fields, files) => {
+            const fileToUpload = files.file[0].filepath;
+
+            cloudinary.uploader.upload(fileToUpload, { public_id: uuid() }, async function (error, result) {
+                if (error) {
+                    const error = new Error('There was an error uploading the image. Try again.')
+                    res.status(500).json({ error: error.message })
+                }
+                if (result) {
+                    req.user.image = result.secure_url
+                    await req.user.save()
+                    res.json({image: result.secure_url})
+                }
+            })
+        })
+
+    } catch (e) {
+        const error = new Error('There was an error')
+        res.status(500).json({ error: error.message })
+        return;
+    }
+
 }
